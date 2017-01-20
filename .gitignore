@@ -1,0 +1,10 @@
+
+# Jupyter notebook
+*.ipynb
+
+# compiled python files
+*.pyc
+
+# xml and iml
+*xml
+*iml
