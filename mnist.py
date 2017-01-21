@@ -28,17 +28,7 @@ def mnist(datasets_dir='./data'):
         train_set, valid_set, test_set = cPickle.load(f)
     f.close()
 
-    test_x, test_y = test_set
-    test_x = test_x.astype('float32')
-    test_x = test_x.astype('float32').reshape(test_x.shape[0], 1, 28, 28)
-    test_y = test_y.astype('int32')
-    valid_x, valid_y = valid_set
-    valid_x = valid_x.astype('float32')
-    valid_x = valid_x.astype('float32').reshape(valid_x.shape[0], 1, 28, 28)
-    valid_y = valid_y.astype('int32')
     train_x, train_y = train_set
-    train_x = train_x.astype('float32').reshape(train_x.shape[0], 1, 28, 28)
-    train_y = train_y.astype('int32')
-    #rval = [(train_x, train_y), (valid_x, valid_y), (test_x, test_y)]
+    train_x = train_x.reshape(train_x.shape[0], 1, 28, 28)
     print('... done loading data')
-    return train_x / np.float32(255)
+    return train_x #/ np.float32(255)

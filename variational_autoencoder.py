@@ -19,13 +19,13 @@ class VariationalAutoEncoder(object):
     def build_encoder(self, n_latent=20, shape=(None,1,28,28), input_var=None):
         encoder = lasagne.layers.InputLayer(shape, input_var=input_var) #(*, 1, 28, 28)
 
-        encoder = lasagne.layers.Conv2DLayer(encoder, num_filters=16, filter_size=(5, 5), pad='same',
-        nonlinearity=lasagne.nonlinearities.rectify,
-        W=lasagne.init.Normal()) #(*, 16, 28, 28)
+        #encoder = lasagne.layers.Conv2DLayer(encoder, num_filters=16, filter_size=(5, 5), pad='same',
+        #nonlinearity=lasagne.nonlinearities.rectify,
+        #W=lasagne.init.Normal()) #(*, 16, 28, 28)
 
-        encoder = lasagne.layers.Conv2DLayer(encoder, num_filters=16, filter_size=(5, 5), pad='same',
-                                              nonlinearity=lasagne.nonlinearities.rectify,
-                                              W=lasagne.init.Normal())  # (*, 16, 28, 28)
+        #encoder = lasagne.layers.Conv2DLayer(encoder, num_filters=16, filter_size=(5, 5), pad='same',
+        #                                      nonlinearity=lasagne.nonlinearities.rectify,
+        #                                      W=lasagne.init.Normal())  # (*, 16, 28, 28)
 
         encoder = lasagne.layers.DenseLayer(
            encoder,
