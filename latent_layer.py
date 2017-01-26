@@ -21,5 +21,4 @@ class GaussianLayer(lasagne.layers.MergeLayer):
         mu, log_sigma = inputs # mu: (*, n_latent), sigma: (*, n_latent)
         shape=(inputs[0].shape[0], inputs[0].shape[1])
         eps = self.srng.normal(shape) #(*, n_latent)
-        #epsilon = self.srng.normal(avg=np.zeros((epsilon_shape,epsilon_shape)),std=np.identity(epsilon_shape))
         return mu + T.exp(log_sigma) * eps #(*, n_latent)

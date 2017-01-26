@@ -8,3 +8,6 @@
 # xml and iml
 *xml
 *iml
+
+# Data path file
+data_paths.py
