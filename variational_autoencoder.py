@@ -63,7 +63,7 @@ class VariationalAutoEncoder(object):
 
         self.dec_l2 = lasagne.layers.ReshapeLayer(self.dec_l1, shape=shape) #(*, 1, 28, 28)
 
-        self.dec_l3 = lasagne.layers.Conv2DLayer(self.dec_l2, num_filters=16, filter_size=(5, 5), pad='same',
+        self.dec_l3 = lasagne.layers.Conv2DLayer(self.dec_l2, num_filters=3, filter_size=(5, 5), pad='same',
         nonlinearity=lasagne.nonlinearities.rectify,
         W=lasagne.init.HeNormal(gain='relu')) #(*, 16, 28, 28)
 
@@ -71,7 +71,7 @@ class VariationalAutoEncoder(object):
         nonlinearity=lasagne.nonlinearities.sigmoid,
         W=lasagne.init.Normal()) #(*, 1, 28, 28)
 
-        return self.dec_l3
+        return self.dec_l4
 
     # def build_decoder_from_weights(self, input_shape, output_shape, input_var=None):
     #     input_layer = lasagne.layers.InputLayer(input_shape, input_var=input_var)  # (*, n_latent)
