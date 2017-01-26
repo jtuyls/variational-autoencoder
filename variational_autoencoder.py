@@ -73,25 +73,25 @@ class VariationalAutoEncoder(object):
 
         return self.dec_l3
 
-    def build_decoder_from_weights(self, input_shape, output_shape, input_var=None):
-        input_layer = lasagne.layers.InputLayer(input_shape, input_var=input_var)  # (*, n_latent)
-
-        num_units = output_shape[1] * output_shape[2] * output_shape[3]
-        d1= lasagne.layers.DenseLayer(input_layer,
-                                      num_units=num_units,
-                                      nonlinearity=lasagne.nonlinearities.rectify,
-                                      W=lasagne.layers.get_all_param_values(self.dec_l1)[0],
-                                      b=lasagne.layers.get_all_param_values(self.dec_l1)[0])
-
-        d2 = lasagne.layers.ReshapeLayer(self.dec_d1, shape=shape)  # (*, 1, 28, 28)
-
-    # decoder = lasagne.layers.Conv2DLayer(decoder, num_filters=16, filter_size=(5, 5), pad='same',
-    # nonlinearity=lasagne.nonlinearities.rectify,
-    # W=lasagne.init.HeNormal(gain='relu')) #(*, 16, 28, 28)
-
-    self.dec_l3 = lasagne.layers.Conv2DLayer(self.dec_l2, num_filters=shape[1], filter_size=(5, 5), pad='same',
-                                             nonlinearity=lasagne.nonlinearities.sigmoid,
-                                             W=lasagne.init.Normal())  # (*, 1, 28, 28)
+    # def build_decoder_from_weights(self, input_shape, output_shape, input_var=None):
+    #     input_layer = lasagne.layers.InputLayer(input_shape, input_var=input_var)  # (*, n_latent)
+    #
+    #     num_units = output_shape[1] * output_shape[2] * output_shape[3]
+    #     d1= lasagne.layers.DenseLayer(input_layer,
+    #                                   num_units=num_units,
+    #                                   nonlinearity=lasagne.nonlinearities.rectify,
+    #                                   W=lasagne.layers.get_all_param_values(self.dec_l1)[0],
+    #                                   b=lasagne.layers.get_all_param_values(self.dec_l1)[0])
+    #
+    #     d2 = lasagne.layers.ReshapeLayer(self.dec_d1, shape=shape)  # (*, 1, 28, 28)
+    #
+    #     # decoder = lasagne.layers.Conv2DLayer(decoder, num_filters=16, filter_size=(5, 5), pad='same',
+    #     # nonlinearity=lasagne.nonlinearities.rectify,
+    #     # W=lasagne.init.HeNormal(gain='relu')) #(*, 16, 28, 28)
+    #
+    #     self.dec_l3 = lasagne.layers.Conv2DLayer(self.dec_l2, num_filters=shape[1], filter_size=(5, 5), pad='same',
+    #                                          nonlinearity=lasagne.nonlinearities.sigmoid,
+    #                                          W=lasagne.init.Normal())  # (*, 1, 28, 28)
 
     '''
     Method that return the Kullcback-leible divergence
