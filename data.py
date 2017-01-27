@@ -34,8 +34,10 @@ def mnist(datasets_dir='./data'):
     train_x = train_x.reshape(train_x.shape[0], 1, 28, 28)
     val_x, _ = valid_set
     val_x = val_x.reshape(val_x.shape[0], 1, 28, 28)
+    test_x, _ = test_set
+    test_x = test_x.reshape(test_x.shape[0], 1, 28, 28)
     print('... done loading data')
-    return train_x, val_x #/ np.float32(255)
+    return train_x, val_x, test_x #/ np.float32(255)
 
 def celeb_data():
         print("Loading celeb data")
@@ -55,4 +57,4 @@ def celeb_data():
         with open(os.path.join(data_path, "attr_names.txt")) as f:
             attr_names = f.readlines()[0].split()
 
-        return train_images, val_images
+        return train_images, val_images, test_images
