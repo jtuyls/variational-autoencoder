@@ -16,6 +16,17 @@ class VariationalAutoEncoder(object):
     def __init__(self):
         pass
 
+    def load_data(self, data_set, downsampling):
+        if data_set == "celeb_data":
+            X_train, X_val, X_test = celeb_data()
+        else:
+            # load mnist data set
+            X_train, X_val, X_test = mnist()
+
+        X_train = X_train[:downsampling] if downsampling else X_train
+        X_val = X_val[:downsampling] if downsampling else X_val
+        return X_train, X_val, X_test
+
     def build_encoder(self, n_latent=20, shape=(None,1,28,28), input_var=None):
         encoder = lasagne.layers.InputLayer(shape, input_var=input_var) #(*, 1, 28, 28)
 
@@ -56,25 +67,27 @@ class VariationalAutoEncoder(object):
 
         return self.dec_l4
 
-    # def build_decoder_from_weights(self, input_shape, output_shape, input_var=None):
-    #     input_layer = lasagne.layers.InputLayer(input_shape, input_var=input_var)  # (*, n_latent)
-    #
-    #     num_units = output_shape[1] * output_shape[2] * output_shape[3]
-    #     d1= lasagne.layers.DenseLayer(input_layer,
-    #                                   num_units=num_units,
-    #                                   nonlinearity=lasagne.nonlinearities.rectify,
-    #                                   W=lasagne.layers.get_all_param_values(self.dec_l1)[0],
-    #                                   b=lasagne.layers.get_all_param_values(self.dec_l1)[0])
-    #
-    #     d2 = lasagne.layers.ReshapeLayer(self.dec_d1, shape=shape)  # (*, 1, 28, 28)
-    #
-    #     # decoder = lasagne.layers.Conv2DLayer(decoder, num_filters=16, filter_size=(5, 5), pad='same',
-    #     # nonlinearity=lasagne.nonlinearities.rectify,
-    #     # W=lasagne.init.HeNormal(gain='relu')) #(*, 16, 28, 28)
-    #
-    #     self.dec_l3 = lasagne.layers.Conv2DLayer(self.dec_l2, num_filters=shape[1], filter_size=(5, 5), pad='same',
-    #                                          nonlinearity=lasagne.nonlinearities.sigmoid,
-    #                                          W=lasagne.init.Normal())  # (*, 1, 28, 28)
+    def build_decoder_from_weights(self, weights, input_shape, output_shape=(-1,1,28,28), input_var=None):
+        input_layer = lasagne.layers.InputLayer(input_shape, input_var=input_var)  # (*, n_latent)
+
+        num_units = output_shape[1] * output_shape[2] * output_shape[3]
+        d1 = lasagne.layers.DenseLayer(input_layer,
+                                      num_units=num_units,
+                                      nonlinearity=lasagne.nonlinearities.rectify,
+                                      W=weights[0],
+                                      b=weights[1])
+
+        d2 = lasagne.layers.ReshapeLayer(d1, shape=output_shape)  # (*, 1, 28, 28)
+
+        # decoder = lasagne.layers.Conv2DLayer(decoder, num_filters=16, filter_size=(5, 5), pad='same',
+        # nonlinearity=lasagne.nonlinearities.rectify,
+        # W=lasagne.init.HeNormal(gain='relu')) #(*, 16, 28, 28)
+
+        d3 = lasagne.layers.Conv2DLayer(d2, num_filters=output_shape[1], filter_size=(5, 5), pad='same',
+                                             nonlinearity=lasagne.nonlinearities.sigmoid,
+                                             W=weights[2],
+                                        b=weights[3])  # (*, 1, 28, 28)
+        return d3
 
     '''
     Method that return the Kullcback-leible divergence
@@ -174,20 +187,26 @@ class VariationalAutoEncoder(object):
         print("Variational autoencoder trained")
         return lst_loss_train, lst_loss_val
 
-    def test_vae(self):
-        srng = T.shared_randomstreams.RandomStreams()
+    def test_vae(self, test_decoder, input_var, n_latent):
+        # Output of test decoder
+        output = lasagne.layers.get_output(test_decoder)
+        get_output = theano.function([input_var], output)
+
+        # Sample from N(0,I)
+        rng = np.random.RandomState()
+        shape = (10, n_latent)
+        z = rng.normal(size=shape)
+
+        # Get output for z
+        constructed_images = get_output(z)
+        visualize_images(constructed_images)
 
 
     def main(self, data_set, num_epochs=20, learning_rate=0.001, batch_size=64, downsampling=None):
-        if data_set == "mnist":
-            X_train, X_val, X_test = mnist()
-        elif data_set == "celeb_data":
-            X_train, X_val, X_test = celeb_data()
+        # Load data
+        X_train, X_val, X_test = self.load_data(data_set=data_set, downsampling=downsampling)
         print(X_train.shape, X_val.shape, X_test.shape)
         #visualize_images(X_train[:1])
-
-        X_train = X_train[:downsampling] if downsampling else X_train
-        X_val = X_val[:downsampling] if downsampling else X_val
 
         input_shape = X_train.shape
 
@@ -195,7 +214,7 @@ class VariationalAutoEncoder(object):
         input_var = T.tensor4()
         n_latent = 20
         shape = (None, input_shape[1], input_shape[2], input_shape[3])
-        encoder = self.build_encoder(input_var=input_var, shape=shape)
+        encoder = self.build_encoder(input_var=input_var, n_latent=n_latent, shape=shape)
 
         # Gaussian layer in between encoder and decoder
         mu, log_sigma = encoder
@@ -211,7 +230,16 @@ class VariationalAutoEncoder(object):
                        learning_rate=learning_rate,
                        batch_size=batch_size)
 
-        # After training test on test images
+        # Construct images from scratch
+        print(lasagne.layers.get_all_params(vae)[-4:])
+        test_input_var = T.matrix()
+        test_decoder = self.build_decoder_from_weights(weights=lasagne.layers.get_all_params(vae)[-4:],
+                                                       input_shape=(None, n_latent),
+                                                       output_shape=shape,
+                                                       input_var=test_input_var)
+        self.test_vae(test_decoder, test_input_var, n_latent)
+
+        # After training test on test images and visualize 10 test images
         output = lasagne.layers.get_output(vae)
         get_output = theano.function([input_var], output)
         test_input = X_test[:10]
