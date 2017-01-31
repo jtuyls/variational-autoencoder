@@ -9,23 +9,26 @@ import numpy as np
 
 from data import mnist, celeb_data
 from latent_layer import GaussianLayer
-from visualization import visualize_images
+from visualization import visualize_images, compare_images, visualize_image_canvas
 
 class VariationalAutoEncoder(object):
 
     def __init__(self):
         pass
 
+    def load_data(self, data_set, downsampling):
+        if data_set == "celeb_data":
+            X_train, X_val, X_test = celeb_data()
+        else:
+            # load mnist data set
+            X_train, X_val, X_test = mnist()
+
+        X_train = X_train[:downsampling] if downsampling else X_train
+        X_val = X_val[:downsampling] if downsampling else X_val
+        return X_train, X_val, X_test
+
     def build_encoder(self, n_latent=20, shape=(None,1,28,28), input_var=None):
         encoder = lasagne.layers.InputLayer(shape, input_var=input_var) #(*, 1, 28, 28)
-
-        encoder = lasagne.layers.Conv2DLayer(encoder, num_filters=16, filter_size=(5, 5), pad='same',
-        nonlinearity=lasagne.nonlinearities.rectify,
-        W=lasagne.init.Normal()) #(*, 16, 28, 28)
-
-        encoder = lasagne.layers.Conv2DLayer(encoder, num_filters=16, filter_size=(5, 5), pad='same',
-                                              nonlinearity=lasagne.nonlinearities.rectify,
-                                              W=lasagne.init.Normal())  # (*, 16, 28, 28)
 
         encoder = lasagne.layers.DenseLayer(
            encoder,
@@ -51,47 +54,42 @@ class VariationalAutoEncoder(object):
 
     def build_decoder(self, gaussian_merge_layer, shape=(-1,1,28,28)):
         num_units = shape[1] * shape[2] * shape[3]
-        self.dec_l1 = lasagne.layers.DenseLayer(gaussian_merge_layer,
-                        num_units=num_units,
-                        nonlinearity=lasagne.nonlinearities.rectify,
-                        W=lasagne.init.Normal())
+        d1 = lasagne.layers.DenseLayer(gaussian_merge_layer,
+                                                num_units=num_units,
+                                                nonlinearity=lasagne.nonlinearities.rectify,
+                                                W=lasagne.init.Normal())
 
-        #decoder = lasagne.layers.DenseLayer(gaussian_merge_layer,
-        #                num_units=num_units,
-        #                nonlinearity=lasagne.nonlinearities.sigmoid,
-        #                W=lasagne.init.HeNormal(gain='relu'))
+        d2 = lasagne.layers.ReshapeLayer(d1, shape=shape) #(*, 1, 28, 28)
+        #
+        d3 = lasagne.layers.Conv2DLayer(d2,
+                                        num_filters=shape[1],
+                                        filter_size=(5, 5),
+                                        pad='same',
+                                        nonlinearity=lasagne.nonlinearities.sigmoid,
+                                        W=lasagne.init.Normal()) #(*, 1, 28, 28)
 
-        self.dec_l2 = lasagne.layers.ReshapeLayer(self.dec_l1, shape=shape) #(*, 1, 28, 28)
+        return d3
 
-        self.dec_l3 = lasagne.layers.Conv2DLayer(self.dec_l2, num_filters=3, filter_size=(5, 5), pad='same',
-        nonlinearity=lasagne.nonlinearities.rectify,
-        W=lasagne.init.HeNormal(gain='relu')) #(*, 16, 28, 28)
+    def build_decoder_from_weights(self, weights, input_shape, output_shape=(-1,1,28,28), input_var=None):
+        input_layer = lasagne.layers.InputLayer(input_shape, input_var=input_var)  # (*, n_latent)
 
-        self.dec_l4 = lasagne.layers.Conv2DLayer(self.dec_l3, num_filters=shape[1], filter_size=(5, 5), pad='same',
-        nonlinearity=lasagne.nonlinearities.sigmoid,
-        W=lasagne.init.Normal()) #(*, 1, 28, 28)
+        num_units = output_shape[1] * output_shape[2] * output_shape[3]
+        d1 = lasagne.layers.DenseLayer(input_layer,
+                                      num_units=num_units,
+                                      nonlinearity=lasagne.nonlinearities.rectify,
+                                      W=weights[0],
+                                      b=weights[1])
 
-        return self.dec_l4
+        d2 = lasagne.layers.ReshapeLayer(d1, shape=output_shape)  # (*, 1, 28, 28)
 
-    # def build_decoder_from_weights(self, input_shape, output_shape, input_var=None):
-    #     input_layer = lasagne.layers.InputLayer(input_shape, input_var=input_var)  # (*, n_latent)
-    #
-    #     num_units = output_shape[1] * output_shape[2] * output_shape[3]
-    #     d1= lasagne.layers.DenseLayer(input_layer,
-    #                                   num_units=num_units,
-    #                                   nonlinearity=lasagne.nonlinearities.rectify,
-    #                                   W=lasagne.layers.get_all_param_values(self.dec_l1)[0],
-    #                                   b=lasagne.layers.get_all_param_values(self.dec_l1)[0])
-    #
-    #     d2 = lasagne.layers.ReshapeLayer(self.dec_d1, shape=shape)  # (*, 1, 28, 28)
-    #
-    #     # decoder = lasagne.layers.Conv2DLayer(decoder, num_filters=16, filter_size=(5, 5), pad='same',
-    #     # nonlinearity=lasagne.nonlinearities.rectify,
-    #     # W=lasagne.init.HeNormal(gain='relu')) #(*, 16, 28, 28)
-    #
-    #     self.dec_l3 = lasagne.layers.Conv2DLayer(self.dec_l2, num_filters=shape[1], filter_size=(5, 5), pad='same',
-    #                                          nonlinearity=lasagne.nonlinearities.sigmoid,
-    #                                          W=lasagne.init.Normal())  # (*, 1, 28, 28)
+        d3 = lasagne.layers.Conv2DLayer(d2,
+                                        num_filters=output_shape[1],
+                                        filter_size=(5, 5),
+                                        pad='same',
+                                        nonlinearity=lasagne.nonlinearities.sigmoid,
+                                        W=weights[2],
+                                        b=weights[3])  # (*, 1, 28, 28)
+        return d3
 
     '''
     Method that return the Kullcback-leible divergence
@@ -124,22 +122,19 @@ class VariationalAutoEncoder(object):
         # Create Theano variable for output tensor
         true_output = T.tensor4('targets')
 
+        # TRAINING FUNCTION
+
         # Loss of the total variational autoencoder, so between the generated images
         # and the true images
-        output = lasagne.layers.get_output(vae)
+        output = lasagne.layers.get_output(vae, deterministic=False)
         loss_vae = T.sum(lasagne.objectives.binary_crossentropy(output, true_output), axis=[1,2,3])
-        #compute_loss_vae = theano.function([input_var, true_output], loss_vae)
-        #print(compute_loss_vae(inputs, inputs))
 
         # Kullback-Leibler divergence
         mu, log_sigma = encoder
-        mu_output = lasagne.layers.get_output(mu)
-        log_sigma_output = lasagne.layers.get_output(log_sigma)
+        mu_output = lasagne.layers.get_output(mu, deterministic=False)
+        log_sigma_output = lasagne.layers.get_output(log_sigma, deterministic=False)
         loss_kl = self.get_kl_div(mu_output, log_sigma_output)
-        #compute_loss_kl = theano.function([input_var], loss_kl)
-        #rint(compute_loss_kl(inputs))
 
-        # TODO IS this correct?
         # Total loss is loss from the reconstructed image after the decoder - Kullblack Leibler divergence
         loss = T.mean(loss_vae - loss_kl) # single value
 
@@ -149,7 +144,24 @@ class VariationalAutoEncoder(object):
 
         # train function
         train = theano.function([input_var, true_output], loss, updates=updates)
-        val = theano.function([input_var, true_output], loss)
+
+        # VALIDATION FUNCTION
+
+        # Loss of the total variational autoencoder, so between the generated images
+        # and the true images
+        val_output = lasagne.layers.get_output(vae, deterministic=True)
+        val_loss_vae = T.sum(lasagne.objectives.binary_crossentropy(val_output, true_output), axis=[1, 2, 3])
+
+        # Kullback-Leibler divergence
+        val_mu_output = lasagne.layers.get_output(mu, deterministic=True)
+        val_log_sigma_output = lasagne.layers.get_output(log_sigma, deterministic=True)
+        val_loss_kl = self.get_kl_div(val_mu_output, val_log_sigma_output)
+
+        # Total loss is loss from the reconstructed image after the decoder - Kullblack Leibler divergence
+        val_loss = T.mean(val_loss_vae - val_loss_kl)  # single value
+
+        # validation function
+        val = theano.function([input_var, true_output], val_loss)
 
         # output function
         get_output = theano.function([input_var], output)
@@ -179,9 +191,9 @@ class VariationalAutoEncoder(object):
 
             lst_loss_val.append(val_err / val_batches)
 
-            if epoch + 1 % 10 == 0:
-                output = get_output(X_train[:10])
-                visualize_images(output)
+            if epoch % 1 == 0:
+                output = get_output(X_train[:100])
+                visualize_image_canvas(output, stamp="train_" + str(epoch + 1))
 
             print("Epoch {} of {} took {:.3f}s".format(
                 epoch + 1, num_epochs, time.time() - start_time))
@@ -191,30 +203,34 @@ class VariationalAutoEncoder(object):
         print("Variational autoencoder trained")
         return lst_loss_train, lst_loss_val
 
-    def test_vae(self):
-        srng = T.shared_randomstreams.RandomStreams()
+    def test_vae(self, test_nb, test_decoder, input_var, n_latent):
+        # Output of test decoder
+        output = lasagne.layers.get_output(test_decoder)
+        get_output = theano.function([input_var], output)
+
+        # Sample from N(0,I)
+        rng = np.random.RandomState()
+        shape = (test_nb, n_latent)
+        z = rng.normal(size=shape)
+
+        # Get output for z
+        constructed_images = get_output(z)
+        visualize_image_canvas(constructed_images, stamp="test_construction")
 
 
     def main(self, data_set, num_epochs=20, learning_rate=0.001, batch_size=64, downsampling=None):
-        if data_set == "mnist":
-            X_train, X_val = mnist()
-        elif data_set == "celeb_data":
-            X_train, X_val = celeb_data()
-        print(X_train.shape, X_val.shape)
-        visualize_images(X_train[:10])
-
-        X_train = X_train[:downsampling] if downsampling else X_train
-        X_val = X_val[:downsampling] if downsampling else X_val
+        # Load data
+        X_train, X_val, X_test = self.load_data(data_set=data_set, downsampling=downsampling)
+        print(X_train.shape, X_val.shape, X_test.shape)
+        #visualize_images(X_train[:1])
 
         input_shape = X_train.shape
-
-
 
         # encoder
         input_var = T.tensor4()
         n_latent = 20
         shape = (None, input_shape[1], input_shape[2], input_shape[3])
-        encoder = self.build_encoder(input_var=input_var, shape=shape)
+        encoder = self.build_encoder(input_var=input_var, n_latent=n_latent, shape=shape)
 
         # Gaussian layer in between encoder and decoder
         mu, log_sigma = encoder
@@ -229,6 +245,23 @@ class VariationalAutoEncoder(object):
                        num_epochs=num_epochs,
                        learning_rate=learning_rate,
                        batch_size=batch_size)
+
+        # Construct images from scratch
+        test_input_var = T.matrix()
+        test_decoder = self.build_decoder_from_weights(weights=lasagne.layers.get_all_params(vae)[-4:],
+                                                       input_shape=(None, n_latent),
+                                                       output_shape=shape,
+                                                       input_var=test_input_var)
+        self.test_vae(100, test_decoder, test_input_var, n_latent)
+
+        # After training test on test images and visualize 10 test images
+        output = lasagne.layers.get_output(vae)
+        get_output = theano.function([input_var], output)
+        test_input = X_test[:10]
+        test_reconstructed = get_output(test_input)
+        compare_images(test_input, test_reconstructed, stamp="test_compare")
+
+
 
 if __name__ == '__main__':
     vae = VariationalAutoEncoder()
