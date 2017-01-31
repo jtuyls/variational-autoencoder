@@ -14,6 +14,6 @@ if __name__ == "__main__":
     if scenario == 2:
         # Train variational auoencoder with convolutional layers
         vae = VaeConvNet()
-        vae.main(data_set="celeb_data", num_epochs=50, batch_size=100, downsampling=None)
+        vae.main(data_set="celeb_data", num_epochs=100, batch_size=100, downsampling=None)
 
 
