@@ -4,6 +4,8 @@ import os
 import gzip
 import cPickle
 import numpy as np
+import matplotlib
+#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 from data_paths import data_path, data_path_cells
