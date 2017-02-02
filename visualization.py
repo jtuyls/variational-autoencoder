@@ -61,14 +61,16 @@ def visualize_image_canvas(inputs, stamp):
                 image = inputs[i][j].reshape(shape_x, shape_x)
                 canvas[i*shape_x:(i+1)*shape_x, j*shape_x:(j+1)*shape_x] = image
             else:
-                image = deprocess_image(inputs[i][j])
-                temp = image[:,:,0]
-                image[:,:,0] = image[:,:,2]
-                image[:,:,2] = temp
+                image = deprocess_image(inputs[i][j]) / 255.0
+                #image = np.roll(image, 1)
+                #temp = image[:,:,1]
+                #image[:,:,1] = image[:,:,2]
+                #image[:,:,2] = temp
                 #image = np.roll(image[:,:,0], 2, 2)#image[:,:,::-1]#np.flip(image, axis=2)
                 canvas[i * shape_x:(i + 1) * shape_x, j * shape_x:(j + 1) * shape_x] = image
+                print(canvas.shape)
     plt.figure(figsize=(8, 10))
-    plt.imshow(canvas, origin="upper", cmap="gray")
+    plt.imshow(canvas, origin="upper", cmap='jet')
     plt.tight_layout()
     plt.savefig('figures/fig_canvas_' + stamp + '.png')
     plt.show()
