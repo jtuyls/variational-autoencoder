@@ -7,7 +7,7 @@ import theano.tensor as T
 import lasagne
 import numpy as np
 
-from data import mnist, celeb_data
+from data import mnist, celeb_data, cell_data
 from latent_layer import GaussianLayer
 from visualization import visualize_images, compare_images, visualize_image_canvas, visualize_latent_layer_scatter
 
@@ -25,9 +25,15 @@ class VariationalAutoEncoder(object):
         self.X_test = None
         self.y_test = None
 
+        self.load_data_functions = {
+            'celeb_data': celeb_data,
+            'cell_data': cell_data,
+            'mnist': mnist
+        }
+
     def load_data(self, data_set, downsampling):
-        if data_set == "celeb_data":
-            X_train, X_val, X_test, y_test = celeb_data()
+        if data_set in self.load_data_functions.keys():
+            X_train, X_val, X_test, y_test = self.load_data_functions[data_set]()
         else:
             # load mnist data set
             X_train, X_val, X_test, y_test = mnist()
@@ -229,7 +235,7 @@ class VariationalAutoEncoder(object):
     def visualize_latent_layer_unsupervised(self):
         if self.n_latent != 2:
             raise NotImplementedError("n_latent should be equal to 2 to be visualized in a 2D diagram")
-        if self.y_test == None:
+        if self.y_test != np.array([]):
             raise NotImplementedError("There should be labels for the latent layer to be visualized")
 
         self._visualize_latent_layer_unsupervised(self.mu, self.input_var, self.X_test, self.y_test)

@@ -95,8 +95,8 @@ class VaeConvNet(VariationalAutoEncoder):
 
     def main(self, data_set, n_latent, num_epochs=20, learning_rate=0.001, batch_size=64, downsampling=None):
         # Load data
-        self.X_train, self.X_val, self.X_test = self.load_data(data_set=data_set, downsampling=downsampling)
-        print(self.X_train.shape, self.X_val.shape, self.X_test.shape)
+        self.X_train, self.X_val, self.X_test, self.y_test = self.load_data(data_set=data_set, downsampling=downsampling)
+        print(self.X_train.shape, self.X_val.shape, self.X_test.shape, self.y_test.shape)
         # visualize_images(X_train[:1])
 
         input_shape = self.X_train.shape

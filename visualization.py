@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 def compare_images(input_images, reconstructed_images, stamp):
+    # this method is inspired by https://jmetzen.github.io/2015-11-27/vae.html
     print("Compare images in visualization")
     if not len(input_images) == len(reconstructed_images):
         raise ValueError("Inputs should have the same size")
@@ -37,6 +38,7 @@ def compare_images(input_images, reconstructed_images, stamp):
     #plt.savefig('figures/fig_' + str(i) + '.png')
 
 def visualize_image_canvas(inputs, stamp):
+    # this method is inspired by https://jmetzen.github.io/2015-11-27/vae.html
     path = os.path.dirname(os.path.abspath(__file__))
     if not os.path.exists(path + "/figures"):
         os.makedirs(path + "/figures")
@@ -60,6 +62,10 @@ def visualize_image_canvas(inputs, stamp):
                 canvas[i*shape_x:(i+1)*shape_x, j*shape_x:(j+1)*shape_x] = image
             else:
                 image = deprocess_image(inputs[i][j])
+                temp = image[:,:,0]
+                image[:,:,0] = image[:,:,2]
+                image[:,:,2] = temp
+                #image = np.roll(image[:,:,0], 2, 2)#image[:,:,::-1]#np.flip(image, axis=2)
                 canvas[i * shape_x:(i + 1) * shape_x, j * shape_x:(j + 1) * shape_x] = image
     plt.figure(figsize=(8, 10))
     plt.imshow(canvas, origin="upper", cmap="gray")
@@ -67,8 +73,6 @@ def visualize_image_canvas(inputs, stamp):
     plt.savefig('figures/fig_canvas_' + stamp + '.png')
     plt.show()
     plt.close()
-
-
 
 
 def visualize_images(inputs, stamp):
@@ -85,6 +89,17 @@ def visualize_images(inputs, stamp):
         plt.savefig('figures/fig_' + stamp + "_" + str(i) + '.png')
         plt.show()
         plt.close()
+
+def visualize_latent_layer_scatter(mu, y_values):
+    print(mu.shape)
+    print(y_values)
+    print(np.argmax(y_values, 0))
+    plt.figure(figsize=(8, 6))
+    plt.scatter(mu[:, 0], mu[:, 1])
+    plt.colorbar()
+    plt.grid()
+    plt.show()
+    plt.close()
 
 
 # Code of this method is fully copied from
