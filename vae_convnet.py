@@ -9,6 +9,9 @@ from visualization import visualize_images, compare_images, visualize_image_canv
 
 class VaeConvNet(VariationalAutoEncoder):
 
+    def __init__(self):
+        super(VaeConvNet, self).__init__()
+
     def build_encoder(self, n_latent=20, shape=(None, 1, 28, 28), input_var=None):
         encoder = lasagne.layers.InputLayer(shape, input_var=input_var)  # (*, 1, 28, 28)
 
@@ -90,45 +93,41 @@ class VaeConvNet(VariationalAutoEncoder):
                                         b=weights[5])  # (*, 1, 28, 28)
         return d4
 
-    def main(self, data_set, num_epochs=20, learning_rate=0.001, batch_size=64, downsampling=None):
+    def main(self, data_set, n_latent, num_epochs=20, learning_rate=0.001, batch_size=64, downsampling=None):
         # Load data
-        X_train, X_val, X_test = self.load_data(data_set=data_set, downsampling=downsampling)
-        print(X_train.shape, X_val.shape, X_test.shape)
+        self.X_train, self.X_val, self.X_test, self.y_test = self.load_data(data_set=data_set, downsampling=downsampling)
+        print(self.X_train.shape, self.X_val.shape, self.X_test.shape, self.y_test.shape)
         # visualize_images(X_train[:1])
 
-        input_shape = X_train.shape
+        input_shape = self.X_train.shape
 
         # encoder
-        input_var = T.tensor4()
-        n_latent = 20
+        self.input_var = T.tensor4()
+        self.n_latent = n_latent
         shape = (None, input_shape[1], input_shape[2], input_shape[3])
-        encoder = self.build_encoder(input_var=input_var, n_latent=n_latent, shape=shape)
+        self.encoder = self.build_encoder(input_var=self.input_var, n_latent=self.n_latent, shape=shape)
 
         # Gaussian layer in between encoder and decoder
-        mu, log_sigma = encoder
-        gml = GaussianLayer(mu, log_sigma)
+        self.mu, self.log_sigma = self.encoder
+        self.gml = GaussianLayer(self.mu, self.log_sigma)
 
         # decoder
         shape = (-1, input_shape[1], input_shape[2], input_shape[3])
-        vae = self.build_decoder(gml, shape=shape)
+        self.vae = self.build_decoder(self.gml, shape=shape)
 
         # train
-        self.train_vae(input_var, vae, encoder, X_train, X_val,
+        self.train_vae(input_var=self.input_var,
+                       vae=self.vae,
+                       encoder=self.encoder,
+                       X_train=self.X_train,
+                       X_val=self.X_val,
                        num_epochs=num_epochs,
                        learning_rate=learning_rate,
                        batch_size=batch_size)
 
         # Construct images from scratch
-        test_input_var = T.matrix()
-        test_decoder = self.build_decoder_from_weights(weights=lasagne.layers.get_all_params(vae)[-6:],
+        self.test_input_var = T.matrix()
+        self.test_decoder = self.build_decoder_from_weights(weights=lasagne.layers.get_all_params(self.vae)[-6:],
                                                        input_shape=(None, n_latent),
                                                        output_shape=shape,
                                                        input_var=test_input_var)
-        self.test_vae(100, test_decoder, test_input_var, n_latent)
-
-        # After training test on test images and visualize 10 test images
-        output = lasagne.layers.get_output(vae)
-        get_output = theano.function([input_var], output)
-        test_input = X_test[:10]
-        test_reconstructed = get_output(test_input)
-        compare_images(test_input, test_reconstructed, stamp="test_compare")
