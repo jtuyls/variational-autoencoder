@@ -59,6 +59,10 @@ def celeb_data():
 
     with open(os.path.join(data_path, "attr_names.txt")) as f:
         attr_names = f.readlines()[0].split()
+    # Return the male column of the labels since we want to see how good a vae can unsupervisedly make a distinction between males and females
+    index = attr_names.index("Male")
+    test_labels = test_labels[:, index]
+    print(test_labels.shape)
     print("... done loading data")
     return train_images, val_images, test_images, test_labels
 

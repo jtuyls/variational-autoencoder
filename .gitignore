@@ -11,3 +11,6 @@
 
 # Data path file
 data_paths.py
+
+# images
+*.png
