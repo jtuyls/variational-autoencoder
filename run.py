@@ -1,28 +1,35 @@
+import os
 
-
+from visualization import Visualization
 from variational_autoencoder import VariationalAutoEncoder
 from vae_convnet import VaeConvNet
 
-scenario = 2
+scenario = 3
 
 if __name__ == "__main__":
     if scenario == 1:
         # Train standard variational autoencoder
-        vae = VariationalAutoEncoder()
+        output_dir = os.path.dirname(os.path.abspath(__file__)) + '/figures_scenario_1'
+        viz = Visualization(output_dir=output_dir)
+        vae = VariationalAutoEncoder(visualization=viz)
         vae.main(data_set="celeb_data", n_latent=20, num_epochs=100, batch_size=16, downsampling=100)
         vae.test_vae(downsampling=10)
         vae.construct_images_from_scratch(100)
 
     if scenario == 2:
         # Train variational autoencoder with convolutional layers
-        vae = VaeConvNet()
+        output_dir = os.path.dirname(os.path.abspath(__file__)) + '/figures_scenario_2'
+        viz = Visualization(output_dir=output_dir)
+        vae = VaeConvNet(visualization=viz)
         vae.main(data_set="celeb_data", n_latent=20, num_epochs=50, batch_size=100, downsampling=None)
         vae.test_vae(downsampling=10)
         vae.construct_images_from_scratch(100)
 
     if scenario == 3:
-        # Train standard variational auoencoder and visualize latent layer
-        vae = VariationalAutoEncoder()
+        # Train standard variational autoencoder and visualize latent layer
+        output_dir = os.path.dirname(os.path.abspath(__file__)) + '/figures_scenario_3'
+        viz = Visualization(output_dir=output_dir)
+        vae = VariationalAutoEncoder(visualization=viz)
         vae.main(data_set="mnist", n_latent=2, num_epochs=2, batch_size=100, downsampling=100)
         vae.test_vae(downsampling=10)
         vae.construct_images_from_scratch(100)

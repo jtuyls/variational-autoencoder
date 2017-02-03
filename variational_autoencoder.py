@@ -7,13 +7,13 @@ import theano.tensor as T
 import lasagne
 import numpy as np
 
+from visualization import Visualization
 from data import mnist, celeb_data, cell_data
 from latent_layer import GaussianLayer
-from visualization import visualize_images, compare_images, visualize_image_canvas, visualize_latent_layer_scatter
 
 class VariationalAutoEncoder(object):
 
-    def __init__(self):
+    def __init__(self, visualization=None):
         self.encoder = None
         self.mu = None
         self.log_sigma = None
@@ -24,6 +24,8 @@ class VariationalAutoEncoder(object):
         self.X_val = None
         self.X_test = None
         self.y_test = None
+
+        self.visualization = visualization if visualization != None else Visualization()
 
         self.load_data_functions = {
             'celeb_data': celeb_data,
@@ -208,7 +210,7 @@ class VariationalAutoEncoder(object):
 
             if epoch % 1 == 0:
                 output = get_output(X_train[:100])
-                visualize_image_canvas(output, stamp="train_" + str(epoch + 1))
+                self.visualization.visualize_image_canvas(output, stamp="train_" + str(epoch + 1))
 
             print("Epoch {} of {} took {:.3f}s".format(
                 epoch + 1, num_epochs, time.time() - start_time))
@@ -225,17 +227,17 @@ class VariationalAutoEncoder(object):
         output = lasagne.layers.get_output(self.vae)
         get_output = theano.function([self.input_var], output)
         test_reconstructed = get_output(X_test)
-        compare_images(X_test, test_reconstructed, stamp="test_compare")
+        self.visualization.compare_images(X_test, test_reconstructed, stamp="test_compare")
 
     def construct_images_from_scratch(self, nb_images):
         constructed_images = self._construct_images_from_scratch(nb_images, self.test_decoder, self.test_input_var,
                                                                  self.n_latent)
-        visualize_image_canvas(constructed_images, stamp="test_construction")
+        self.visualization.visualize_image_canvas(constructed_images, stamp="test_construction")
 
     def visualize_latent_layer_unsupervised(self):
         if self.n_latent != 2:
             raise NotImplementedError("n_latent should be equal to 2 to be visualized in a 2D diagram")
-        if self.y_test != np.array([]):
+        if self.y_test == np.array([]):
             raise NotImplementedError("There should be labels for the latent layer to be visualized")
 
         self._visualize_latent_layer_unsupervised(self.mu, self.input_var, self.X_test, self.y_test)
@@ -291,7 +293,7 @@ class VariationalAutoEncoder(object):
 
         #
         z_mu = get_output(X_values)
-        visualize_latent_layer_scatter(z_mu, y_values=y_values)
+        self.visualization.visualize_latent_layer_scatter(z_mu, y_values=y_values)
 
     def _construct_images_from_scratch(self, test_nb, test_decoder, input_var, n_latent):
         # Output of test decoder

@@ -5,12 +5,11 @@ import lasagne
 
 from variational_autoencoder import VariationalAutoEncoder
 from latent_layer import GaussianLayer
-from visualization import visualize_images, compare_images, visualize_image_canvas
 
 class VaeConvNet(VariationalAutoEncoder):
 
-    def __init__(self):
-        super(VaeConvNet, self).__init__()
+    def __init__(self, visualization=None):
+        super(VaeConvNet, self).__init__(visualization)
 
     def build_encoder(self, n_latent=20, shape=(None, 1, 28, 28), input_var=None):
         encoder = lasagne.layers.InputLayer(shape, input_var=input_var)  # (*, 1, 28, 28)
