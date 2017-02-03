@@ -37,7 +37,7 @@ class Visualization(object):
             # plt.show()
         plt.tight_layout()
         plt.savefig(self.output_dir + '/fig_comparison_' + stamp + '.png')
-        plt.show()
+        #plt.show()
         plt.close()
         #plt.savefig('figures/fig_' + str(i) + '.png')
 
@@ -73,7 +73,7 @@ class Visualization(object):
         plt.imshow(canvas, origin="upper", cmap='gray')
         plt.tight_layout()
         plt.savefig(self.output_dir + '/fig_canvas_' + stamp + '.png')
-        plt.show()
+        #plt.show()
         plt.close()
 
 
@@ -89,15 +89,16 @@ class Visualization(object):
                 image = self.deprocess_image(inputs[i])
             plt.imshow(image, cmap='gray')
             plt.savefig(self.output_dir + '/fig_' + stamp + "_" + str(i) + '.png')
-            plt.show()
+            #plt.show()
             plt.close()
 
-    def visualize_latent_layer_scatter(self, mu, y_values):
+    def visualize_latent_layer_scatter(self, mu, y_values, stamp):
         plt.figure(figsize=(8, 6))
         plt.scatter(mu[:, 0], mu[:, 1], c=y_values, cmap='jet')
         plt.colorbar()
         plt.grid()
-        plt.show()
+        plt.savefig(self.output_dir + '/fig_latent_' + stamp + '.png')
+        #plt.show()
         plt.close()
 
 

@@ -30,7 +30,7 @@ if __name__ == "__main__":
         output_dir = os.path.dirname(os.path.abspath(__file__)) + '/figures_scenario_3'
         viz = Visualization(output_dir=output_dir)
         vae = VariationalAutoEncoder(visualization=viz)
-        vae.main(data_set="mnist", n_latent=2, num_epochs=2, batch_size=100, downsampling=100)
+        vae.main(data_set="mnist", n_latent=2, num_epochs=300, batch_size=100, downsampling=None)
         vae.test_vae(downsampling=10)
         vae.construct_images_from_scratch(100)
         vae.visualize_latent_layer_unsupervised()

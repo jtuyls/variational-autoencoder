@@ -293,7 +293,7 @@ class VariationalAutoEncoder(object):
 
         #
         z_mu = get_output(X_values)
-        self.visualization.visualize_latent_layer_scatter(z_mu, y_values=y_values)
+        self.visualization.visualize_latent_layer_scatter(z_mu, y_values=y_values, stamp="")
 
     def _construct_images_from_scratch(self, test_nb, test_decoder, input_var, n_latent):
         # Output of test decoder
@@ -303,7 +303,7 @@ class VariationalAutoEncoder(object):
         # Sample from N(0,I)
         rng = np.random.RandomState()
         shape = (test_nb, n_latent)
-        z = rng.normal(size=shape)
+        z = np.float32(rng.normal(size=shape))
 
         # Get output for z
         constructed_images = get_output(z)
