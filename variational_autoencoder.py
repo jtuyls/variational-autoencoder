@@ -229,6 +229,10 @@ class VariationalAutoEncoder(object):
         test_reconstructed = get_output(X_test)
         self.visualization.compare_images(X_test, test_reconstructed, stamp="test_compare")
 
+    def visualize_train_images_orginal(self, nb_images=100):
+        self.visualization.visualize_image_canvas(self.X_train[:nb_images], stamp="test_images_original")
+
+
     def construct_images_from_scratch(self, nb_images):
         constructed_images = self._construct_images_from_scratch(nb_images, self.test_decoder, self.test_input_var,
                                                                  self.n_latent)

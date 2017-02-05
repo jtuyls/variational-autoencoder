@@ -14,11 +14,11 @@ class VaeConvNet(VariationalAutoEncoder):
     def build_encoder(self, n_latent=20, shape=(None, 1, 28, 28), input_var=None):
         encoder = lasagne.layers.InputLayer(shape, input_var=input_var)  # (*, 1, 28, 28)
 
-        encoder = lasagne.layers.Conv2DLayer(encoder, num_filters=32, filter_size=(5, 5), pad='same',
+        encoder = lasagne.layers.Conv2DLayer(encoder, num_filters=16, filter_size=(5, 5), pad='same',
                                              nonlinearity=lasagne.nonlinearities.rectify,
                                              W=lasagne.init.Normal())  # (*, 16, 28, 28)
 
-        encoder = lasagne.layers.Conv2DLayer(encoder, num_filters=32, filter_size=(5, 5), pad='same',
+        encoder = lasagne.layers.Conv2DLayer(encoder, num_filters=16, filter_size=(5, 5), pad='same',
                                              nonlinearity=lasagne.nonlinearities.rectify,
                                              W=lasagne.init.Normal())  # (*, 16, 28, 28)
 
@@ -53,7 +53,7 @@ class VaeConvNet(VariationalAutoEncoder):
 
         d2 = lasagne.layers.ReshapeLayer(d1, shape=shape)  # (*, 1, 28, 28)
 
-        d3= lasagne.layers.Conv2DLayer(d2, num_filters=32, filter_size=(5, 5), pad='same',
+        d3= lasagne.layers.Conv2DLayer(d2, num_filters=16, filter_size=(5, 5), pad='same',
                                                  nonlinearity=lasagne.nonlinearities.rectify,
                                                  W=lasagne.init.HeNormal(gain='relu'))  # (*, 16, 28, 28)
 
@@ -76,7 +76,7 @@ class VaeConvNet(VariationalAutoEncoder):
         d2 = lasagne.layers.ReshapeLayer(d1, shape=output_shape)  # (*, 1, 28, 28)
 
         d3 = lasagne.layers.Conv2DLayer(d2,
-                                        num_filters=3,
+                                        num_filters=16,
                                         filter_size=(5, 5),
                                         pad='same',
                                         nonlinearity=lasagne.nonlinearities.rectify,
@@ -127,6 +127,6 @@ class VaeConvNet(VariationalAutoEncoder):
         # Construct images from scratch
         self.test_input_var = T.matrix()
         self.test_decoder = self.build_decoder_from_weights(weights=lasagne.layers.get_all_params(self.vae)[-6:],
-                                                       input_shape=(None, n_latent),
+                                                       input_shape=(None, self.n_latent),
                                                        output_shape=shape,
-                                                       input_var=test_input_var)
+                                                       input_var=self.test_input_var)
