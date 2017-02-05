@@ -124,7 +124,9 @@ class VariationalAutoEncoder(object):
     Code of this function is fully copied from
       https://github.com/Lasagne/Lasagne/tree/master/examples
     '''
-    def iterate_minibatches(self, inputs, batchsize, shuffle):
+
+    def iterate_minibatches(self, inputs, targets, batchsize, shuffle):
+        assert len(inputs) == len(targets)
         if shuffle:
             indices = np.arange(len(inputs))
             np.random.shuffle(indices)
@@ -133,9 +135,9 @@ class VariationalAutoEncoder(object):
                 excerpt = indices[start_idx:start_idx + batchsize]
             else:
                 excerpt = slice(start_idx, start_idx + batchsize)
-            yield inputs[excerpt]
+            yield inputs[excerpt], targets[excerpt]
 
-    def train_vae(self, input_var, vae, encoder, X_train, X_val, num_epochs=20, learning_rate=0.001, batch_size=64):
+    def train_vae(self, input_var, vae, encoder, X_train, Y_train, X_val, Y_val, num_epochs=20, learning_rate=0.001, batch_size=64):
         # Create Theano variable for output tensor
         true_output = T.tensor4('targets')
 
@@ -192,18 +194,20 @@ class VariationalAutoEncoder(object):
             train_err = 0
             train_batches = 0
             start_time = time.time()
-            for batch in self.iterate_minibatches(X_train, batch_size, shuffle=True):
+            for batch in self.iterate_minibatches(X_train, Y_train, batch_size, shuffle=True):
+                inputs, targets = batch
                 # Calculate batch error
-                train_err += train(batch, batch)
+                train_err += train(inputs, targets)
                 train_batches += 1
 
             lst_loss_train.append(train_err / train_batches)
 
             val_err = 0
             val_batches = 0
-            for batch in self.iterate_minibatches(X_val, batch_size, shuffle=False):
+            for batch in self.iterate_minibatches(X_val, Y_val, batch_size, shuffle=False):
+                inputs, targets = batch
                 # Calculate batch error
-                val_err += val(batch, batch)
+                val_err += val(inputs, targets)
                 val_batches += 1
 
             lst_loss_val.append(val_err / val_batches)
@@ -229,7 +233,7 @@ class VariationalAutoEncoder(object):
         test_reconstructed = get_output(X_test)
         self.visualization.compare_images(X_test, test_reconstructed, stamp="test_compare")
 
-    def visualize_train_images_orginal(self, nb_images=100):
+    def visualize_train_images_original(self, nb_images=100):
         self.visualization.visualize_image_canvas(self.X_train[:nb_images], stamp="test_images_original")
 
 
@@ -274,7 +278,9 @@ class VariationalAutoEncoder(object):
                                                                 vae=self.vae,
                                                                 encoder=self.encoder,
                                                                 X_train=self.X_train,
+                                                                Y_train=self.X_train,
                                                                 X_val=self.X_val,
+                                                                Y_val=self.X_val,
                                                                 num_epochs=num_epochs,
                                                                 learning_rate=learning_rate,
                                                                 batch_size=batch_size)

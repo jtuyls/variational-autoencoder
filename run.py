@@ -3,8 +3,9 @@ import os
 from visualization import Visualization
 from variational_autoencoder import VariationalAutoEncoder
 from vae_convnet import VaeConvNet
+from vae_input_output import VaeInputOutput
 
-scenario = 2
+scenario = 5
 
 if __name__ == "__main__":
     if scenario == 1:
@@ -14,7 +15,7 @@ if __name__ == "__main__":
         vae = VariationalAutoEncoder(visualization=viz)
         vae.main(data_set="celeb_data", n_latent=20, num_epochs=100, batch_size=16, downsampling=100)
         vae.test_vae(downsampling=10)
-        vae.visualize_train_images_orginal(100)
+        vae.visualize_train_images_original(100)
         vae.construct_images_from_scratch(100)
 
     if scenario == 2:
@@ -24,7 +25,7 @@ if __name__ == "__main__":
         vae = VaeConvNet(visualization=viz)
         vae.main(data_set="mnist", n_latent=20, num_epochs=2, batch_size=100, downsampling=100)
         vae.test_vae(downsampling=10)
-        vae.visualize_train_images_orginal(100)
+        vae.visualize_train_images_original(100)
         vae.construct_images_from_scratch(100)
 
     if scenario == 3:
@@ -34,19 +35,30 @@ if __name__ == "__main__":
         vae = VariationalAutoEncoder(visualization=viz)
         vae.main(data_set="celeb_data", n_latent=2, num_epochs=2, batch_size=100, downsampling=100)
         vae.test_vae(downsampling=10)
-        vae.visualize_train_images_orginal(100)
+        vae.visualize_train_images_original(100)
         vae.construct_images_from_scratch(100)
         vae.visualize_latent_layer_unsupervised()
 
     if scenario == 4:
         # Train variational autoencoder with convolutional layers and visualize latent layer
-        output_dir = os.path.dirname(os.path.abspath(__file__)) + '/figures_scenario_3'
+        output_dir = os.path.dirname(os.path.abspath(__file__)) + '/figures_scenario_4'
         viz = Visualization(output_dir=output_dir)
         vae = VaeConvNet(visualization=viz)
         vae.main(data_set="celeb_data", n_latent=2, num_epochs=2, batch_size=100, downsampling=100)
         vae.test_vae(downsampling=10)
-        vae.visualize_train_images_orginal(100)
+        vae.visualize_train_images_original(100)
         vae.construct_images_from_scratch(100)
         vae.visualize_latent_layer_unsupervised()
+
+    if scenario == 5:
+        # Train variational autoencoder with convolutional layers on cell data set with different inputs and outputs
+        output_dir = os.path.dirname(os.path.abspath(__file__)) + '/figures_scenario_5'
+        viz = Visualization(output_dir=output_dir)
+        vae = VaeInputOutput(visualization=viz)
+        vae.main(data_set="cell_data", n_latent=20, num_epochs=2, batch_size=100, downsampling=100)
+        vae.test_vae(downsampling=10)
+        vae.visualize_train_images_original(100)
+        vae.construct_images_from_scratch(100)
+
 
 

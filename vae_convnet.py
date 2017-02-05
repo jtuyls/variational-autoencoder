@@ -119,7 +119,9 @@ class VaeConvNet(VariationalAutoEncoder):
                        vae=self.vae,
                        encoder=self.encoder,
                        X_train=self.X_train,
+                       Y_train=self.X_train,
                        X_val=self.X_val,
+                       Y_val=self.X_val,
                        num_epochs=num_epochs,
                        learning_rate=learning_rate,
                        batch_size=batch_size)

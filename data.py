@@ -91,6 +91,46 @@ def cell_data(name="Brightfield_Pollen"):
     print("... done loading data")
     return X_train, X_val, X_test, np.array([])
 
+def cell_data_input_output(name="Brightfield_Pollen"):
+    print("Loading cell data")
+    pollen_image_input_name = name + "_cell{}.tif"
+    pollen_image_output_name = name + "_cell{}_masked.tif"
+    image_input_path = data_path_cells + pollen_image_input_name if data_path_cells[
+                                                            -1] == "/" else data_path_cells + "/" + pollen_image_input_name
+    image_output_path = data_path_cells + pollen_image_output_name if data_path_cells[
+                                                                        -1] == "/" else data_path_cells + "/" + pollen_image_output_name
+
+    input_images = []
+    output_images = []
+    another_image = True
+    i = 0
+    while another_image:
+        try:
+            complete_number_string = complete_string(str(i))
+            input_image = plt.imread(image_input_path.format(complete_number_string))
+            input_images.append(input_image)
+            output_image = plt.imread(image_output_path.format(complete_number_string))
+            output_images.append(output_image)
+            i += 1
+        except IOError:
+            another_image = False
+    input_images = np.float32(np.array(input_images)) / 255.0
+    input_images = input_images.reshape(input_images.shape[0], 1, 64, 64)
+    folds = np.array_split(input_images, 10)
+    X_train = np.concatenate(folds[0:8])
+    X_val = folds[8]
+    X_test = folds[9]
+
+    output_images = np.float32(np.array(output_images)) / 255.0
+    output_images = input_images.reshape(output_images.shape[0], 1, 64, 64)
+    folds = np.array_split(output_images, 10)
+    Y_train = np.concatenate(folds[0:8])
+    Y_val = folds[8]
+    Y_test = folds[9]
+
+    print("... done loading data")
+    return X_train, Y_train, X_val, Y_val, X_test, Y_test
+
 
 def complete_string(number_string):
     while len(number_string) < 4:
