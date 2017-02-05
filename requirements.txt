@@ -6,3 +6,5 @@ Lasagne==0.1
 numpy
 
 matplotlib
+
+Pillow
