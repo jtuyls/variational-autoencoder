@@ -101,6 +101,13 @@ class Visualization(object):
         #plt.show()
         plt.close()
 
+    def visualize_canvas(self, canvas, stamp):
+        plt.figure(figsize=(8, 10))
+        #Xi, Yi = np.meshgrid(x_values, y_values)
+        plt.imshow(canvas, origin="upper", cmap="gray")
+        plt.savefig(self.output_dir + '/fig_canvas_latent_' + stamp + '.png')
+        plt.close()
+
 
     # Code of this method is fully copied from
         #   https://blog.keras.io/how-convolutional-neural-networks-see-the-world.html

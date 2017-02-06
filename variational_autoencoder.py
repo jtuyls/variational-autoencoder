@@ -236,7 +236,24 @@ class VariationalAutoEncoder(object):
     def visualize_train_images_original(self, nb_images=100):
         self.visualization.visualize_image_canvas(self.X_train[:nb_images], stamp="test_images_original")
 
+    def visualize_latent_space(self):
+        output = lasagne.layers.get_output(self.test_decoder)
+        get_output = theano.function([self.test_input_var], output)
 
+        nx = ny = 20
+        x_values = np.linspace(-3, 3, nx)
+        y_values = np.linspace(-3, 3, ny)
+
+        canvas = np.empty((28 * ny, 28 * nx))
+        for i, yi in enumerate(x_values):
+            for j, xi in enumerate(y_values):
+                z_mu = np.array([[xi, yi]])
+                # Get output for z
+                constructed_image = get_output(z_mu)
+                canvas[(nx - i - 1) * 28:(nx - i) * 28, j * 28:(j + 1) * 28] = constructed_image[0].reshape(28, 28)
+
+        self.visualization.visualize_canvas(canvas=canvas)
+        
     def construct_images_from_scratch(self, nb_images):
         constructed_images = self._construct_images_from_scratch(nb_images, self.test_decoder, self.test_input_var,
                                                                  self.n_latent)
