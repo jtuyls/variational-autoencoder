@@ -19,7 +19,7 @@ class Visualization(object):
         if not len(input_images) == len(reconstructed_images):
             raise ValueError("Inputs should have the same size")
 
-        plt.figure(figsize=(6, 30))
+        plt.figure(figsize=(20, 20))
         for i in range(0, len(input_images)):
             if input_images.shape[1] == 1:
                 size = input_images.shape[2]
@@ -28,10 +28,10 @@ class Visualization(object):
             else:
                 input_image = self.deprocess_image(input_images[i])
                 reconstructed_image = self.deprocess_image(reconstructed_images[i])
-            plt.subplot(len(input_images), 2, 2 * i + 1)
+            plt.subplot(len(input_images), 10, 1 + i)
             plt.imshow(input_image, cmap='gray')
             plt.title("Input image")
-            plt.subplot(len(input_images), 2, 2 * i + 2)
+            plt.subplot(len(input_images), 10, 11 + i)
             plt.imshow(reconstructed_image, cmap='gray')
             plt.title("Reconstructed image")
             # plt.show()

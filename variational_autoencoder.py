@@ -252,8 +252,8 @@ class VariationalAutoEncoder(object):
                 constructed_image = get_output(z_mu)
                 canvas[(nx - i - 1) * 28:(nx - i) * 28, j * 28:(j + 1) * 28] = constructed_image[0].reshape(28, 28)
 
-        self.visualization.visualize_canvas(canvas=canvas)
-        
+        self.visualization.visualize_canvas(canvas=canvas, stamp="")
+
     def construct_images_from_scratch(self, nb_images):
         constructed_images = self._construct_images_from_scratch(nb_images, self.test_decoder, self.test_input_var,
                                                                  self.n_latent)
