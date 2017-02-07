@@ -224,6 +224,8 @@ class VariationalAutoEncoder(object):
         print("Variational autoencoder trained")
         return lst_loss_train, lst_loss_val
 
+    #### TEST FUNCTIONS ####
+
     def test_vae(self, downsampling=None):
         X_test = self.X_test if downsampling == None else self.X_test[:downsampling]
 
@@ -236,23 +238,28 @@ class VariationalAutoEncoder(object):
     def visualize_train_images_original(self, nb_images=100):
         self.visualization.visualize_image_canvas(self.X_train[:nb_images], stamp="test_images_original")
 
-    def visualize_latent_space(self):
+    def visualize_latent_space(self, nx=10):
         output = lasagne.layers.get_output(self.test_decoder)
         get_output = theano.function([self.test_input_var], output)
 
-        nx = ny = 20
-        x_values = np.linspace(-3, 3, nx)
-        y_values = np.linspace(-3, 3, ny)
+        values =  np.linspace(-3, 3, 20)
+        for v_id, v in enumerate(values):
+            z_mu_list = []
+            for i in range(0, self.n_latent):
+                z_mu = np.zeros(self.n_latent)
+                z_mu[i] = v
+                z_mu_list.append(z_mu)
+            z_mu_list = np.array(z_mu_list)
+            constructed_images = get_output(z_mu_list)
+            self.visualization.visualize_image_canvas(constructed_images, stamp="v_index-"+str(v_id), nx=nx)
 
-        canvas = np.empty((28 * ny, 28 * nx))
-        for i, yi in enumerate(x_values):
-            for j, xi in enumerate(y_values):
-                z_mu = np.array([[xi, yi]])
-                # Get output for z
-                constructed_image = get_output(z_mu)
-                canvas[(nx - i - 1) * 28:(nx - i) * 28, j * 28:(j + 1) * 28] = constructed_image[0].reshape(28, 28)
 
-        self.visualization.visualize_canvas(canvas=canvas, stamp="")
+    def visualize_latent_space_2nlatent(self):
+        # this method is inspired by https://jmetzen.github.io/2015-11-27/vae.html
+        output = lasagne.layers.get_output(self.test_decoder)
+        get_output = theano.function([self.test_input_var], output)
+
+        self.visualization.visualize_latent_space(get_output, self.shape, "")
 
     def construct_images_from_scratch(self, nb_images):
         constructed_images = self._construct_images_from_scratch(nb_images, self.test_decoder, self.test_input_var,
@@ -267,6 +274,7 @@ class VariationalAutoEncoder(object):
 
         self._visualize_latent_layer_unsupervised(self.mu, self.input_var, self.X_test, self.y_test)
 
+    #### MAIN FUNCTION ####
 
     def main(self, data_set, n_latent, num_epochs=20, learning_rate=0.001, batch_size=64, downsampling=None):
         # Load data
@@ -279,16 +287,16 @@ class VariationalAutoEncoder(object):
         # encoder
         self.input_var = T.tensor4()
         self.n_latent = n_latent
-        shape = (None, input_shape[1], input_shape[2], input_shape[3])
-        self.encoder = self.build_encoder(input_var=self.input_var, n_latent=self.n_latent, shape=shape)
+        self._shape = (None, input_shape[1], input_shape[2], input_shape[3])
+        self.encoder = self.build_encoder(input_var=self.input_var, n_latent=self.n_latent, shape=self._shape)
 
         # Gaussian layer in between encoder and decoder
         self.mu, self.log_sigma = self.encoder
         self.gml = GaussianLayer(self.mu, self.log_sigma)
 
         # decoder
-        shape = (-1, input_shape[1], input_shape[2], input_shape[3])
-        self.vae = self.build_decoder(self.gml, shape=shape)
+        self.shape = (-1, input_shape[1], input_shape[2], input_shape[3])
+        self.vae = self.build_decoder(self.gml, shape=self.shape)
 
         # train
         self.lst_loss_train, self.lst_loss_val = self.train_vae(input_var=self.input_var,
@@ -302,16 +310,22 @@ class VariationalAutoEncoder(object):
                                                                 learning_rate=learning_rate,
                                                                 batch_size=batch_size)
 
+        # Save training and validation loss for later plotting
+        self.visualization.save_loss(self.lst_loss_train, "training")
+        self.visualization.save_loss(self.lst_loss_val, "validation")
+
         # Test decoder to construct images from scratch
         self.test_input_var = T.matrix()
         self.test_decoder = self.build_decoder_from_weights(weights=lasagne.layers.get_all_params(self.vae)[-4:],
                                                        input_shape=(None, self.n_latent),
-                                                       output_shape=shape,
+                                                       output_shape=self.shape,
                                                        input_var=self.test_input_var)
 
     ##########################
     #### INTERNAL METHODS ####
     ##########################
+
+
 
     def _visualize_latent_layer_unsupervised(self, mu, input_var, X_values, y_values):
         # Output of mu

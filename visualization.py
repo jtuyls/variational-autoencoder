@@ -19,7 +19,7 @@ class Visualization(object):
         if not len(input_images) == len(reconstructed_images):
             raise ValueError("Inputs should have the same size")
 
-        plt.figure(figsize=(20, 20))
+        plt.figure(figsize=(35, 20))
         for i in range(0, len(input_images)):
             if input_images.shape[1] == 1:
                 size = input_images.shape[2]
@@ -41,33 +41,32 @@ class Visualization(object):
         plt.close()
         #plt.savefig('figures/fig_' + str(i) + '.png')
 
-    def visualize_image_canvas(self, inputs, stamp):
+    def visualize_image_canvas(self, inputs, stamp, nx=None):
         # this method is inspired by https://jmetzen.github.io/2015-11-27/vae.html
 
         shape_x = inputs.shape[2]
         shape_c = inputs.shape[1]
 
-        # inputs should be a squared number
-        nx = int(np.sqrt(inputs.shape[0]))
-        inputs = inputs.reshape((nx, nx, shape_c, shape_x, shape_x))
+        if nx == None:
+            # inputs should be a squared number
+            nx = ny = int(np.sqrt(inputs.shape[0]))
+        else:
+            ny = inputs.shape[0] / nx
+
+        inputs = inputs.reshape((ny, nx, shape_c, shape_x, shape_x))
 
         if shape_c == 1:
-            canvas = np.empty((shape_x * nx, shape_x * nx))
+            canvas = np.empty((shape_x * ny, shape_x * nx))
         else:
-            canvas = np.empty((shape_x * nx, shape_x * nx, shape_c))
+            canvas = np.empty((shape_x * ny, shape_x * nx, shape_c))
 
-        for i in range(0, nx):
+        for i in range(0, ny):
             for j in range(0, nx):
                 if shape_c == 1:
                     image = inputs[i][j].reshape(shape_x, shape_x)
                     canvas[i*shape_x:(i+1)*shape_x, j*shape_x:(j+1)*shape_x] = image
                 else:
                     image = self.deprocess_image(inputs[i][j]) / 255.0
-                    #image = np.roll(image, 1)
-                    #temp = image[:,:,1]
-                    #image[:,:,1] = image[:,:,2]
-                    #image[:,:,2] = temp
-                    #image = np.roll(image[:,:,0], 2, 2)#image[:,:,::-1]#np.flip(image, axis=2)
                     canvas[i * shape_x:(i + 1) * shape_x, j * shape_x:(j + 1) * shape_x] = image
         plt.figure(figsize=(8, 10))
         plt.imshow(canvas, origin="upper", cmap='gray')
@@ -75,6 +74,33 @@ class Visualization(object):
         plt.savefig(self.output_dir + '/fig_canvas_' + stamp + '.png')
         #plt.show()
         plt.close()
+
+    def visualize_latent_space(self, output_function, shape, stamp):
+        # Passing the output function from the variational autoencoder here is not very nice, but yeah... it works
+        nx = ny = 20
+        x_values = np.linspace(-3, 3, nx)
+        y_values = np.linspace(-3, 3, ny)
+
+        shape_x = shape[2]
+        shape_c = shape[1]
+
+        if shape_c == 1:
+            canvas = np.empty((shape_x * ny, shape_x * nx))
+        else:
+            canvas = np.empty((shape_x * ny, shape_x * nx, shape_c))
+
+        for i, yi in enumerate(x_values):
+            for j, xi in enumerate(y_values):
+                z_mu = np.array([[xi, yi]])
+                # Get output for z
+                constructed_image = output_function(z_mu)
+                if shape_c == 1:
+                    constructed_image = constructed_image[0].reshape(shape_x, shape_x)
+                else:
+                    constructed_image = self.deprocess_image(constructed_image[0]) / 255.0
+                canvas[(nx - i - 1) * shape_x:(nx - i) * shape_x, j * shape_x:(j + 1) * shape_x] = constructed_image
+
+        self.visualize_canvas(canvas=canvas, stamp=stamp)
 
 
     def visualize_images(self, inputs, stamp):
@@ -107,6 +133,12 @@ class Visualization(object):
         plt.imshow(canvas, origin="upper", cmap="gray")
         plt.savefig(self.output_dir + '/fig_canvas_latent_' + stamp + '.png')
         plt.close()
+
+    def save_loss(self, lst, stamp):
+        filename = self.output_dir + "/loss_" + stamp
+        with open(filename, 'w') as fn:
+            for i, elem in enumerate(lst):
+                fn.write("{}\t{}\n".format(i+1, elem))
 
 
     # Code of this method is fully copied from
