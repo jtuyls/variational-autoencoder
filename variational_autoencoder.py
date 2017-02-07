@@ -242,11 +242,11 @@ class VariationalAutoEncoder(object):
         output = lasagne.layers.get_output(self.test_decoder)
         get_output = theano.function([self.test_input_var], output)
 
-        values =  np.linspace(-3, 3, 20)
+        values =  np.float32(np.linspace(-3, 3, 20))
         for v_id, v in enumerate(values):
             z_mu_list = []
             for i in range(0, self.n_latent):
-                z_mu = np.zeros(self.n_latent)
+                z_mu = np.float32(np.zeros(self.n_latent))
                 z_mu[i] = v
                 z_mu_list.append(z_mu)
             z_mu_list = np.array(z_mu_list)
