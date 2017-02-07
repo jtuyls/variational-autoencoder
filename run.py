@@ -7,15 +7,15 @@ from vae_ffnn import VaeFfnn
 from vae_convnet2 import VaeConvNet2
 from vae_input_output import VaeInputOutput
 
-scenario = 0
+scenario = 1
 
 if __name__ == "__main__":
 
     if scenario == 0:
         output_dir = os.path.dirname(os.path.abspath(__file__)) + '/figures_scenario_0'
         viz = Visualization(output_dir=output_dir)
-        vae = VaeFfnn(visualization=viz)
-        vae.main(data_set="mnist", n_latent=20, num_epochs=10, batch_size=100, downsampling=None)
+        vae = VaeConvNet2(visualization=viz)
+        vae.main(data_set="mnist", n_latent=20, num_epochs=2, batch_size=100, downsampling=100)
         vae.test_vae(downsampling=10)
         vae.visualize_train_images_original(100)
         vae.construct_images_from_scratch(100)
@@ -29,7 +29,7 @@ if __name__ == "__main__":
         output_dir = os.path.dirname(os.path.abspath(__file__)) + '/figures_scenario_1'
         viz = Visualization(output_dir=output_dir)
         vae = VariationalAutoEncoder(visualization=viz)
-        vae.main(data_set="mnist", n_latent=20, num_epochs=100, batch_size=100, downsampling=None)
+        vae.main(data_set="mnist", n_latent=20, num_epochs=10, batch_size=100, downsampling=None)
         vae.test_vae(downsampling=10)
         vae.visualize_train_images_original(100)
         vae.construct_images_from_scratch(100)

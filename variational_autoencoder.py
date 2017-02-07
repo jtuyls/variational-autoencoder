@@ -44,21 +44,27 @@ class VariationalAutoEncoder(object):
         X_val = X_val[:downsampling] if downsampling else X_val
         return X_train, X_val, X_test, y_test
 
-    def build_encoder(self, n_latent=20, shape=(None,1,28,28), input_var=None):
-        encoder = lasagne.layers.InputLayer(shape, input_var=input_var) #(*, 1, 28, 28)
+    def build_encoder(self, n_latent=20, shape=(None, 1, 28, 28), input_var=None):
+        encoder = lasagne.layers.InputLayer(shape, input_var=input_var)  # (*, 1, 28, 28)
 
         encoder = lasagne.layers.DenseLayer(
-           encoder,
-           num_units=400,
-           nonlinearity=lasagne.nonlinearities.rectify,
-           W=lasagne.init.Normal())
+            encoder,
+            num_units=1000,
+            nonlinearity=lasagne.nonlinearities.rectify,
+            W=lasagne.init.Normal())
+
+        encoder = lasagne.layers.DenseLayer(
+            encoder,
+            num_units=400,
+            nonlinearity=lasagne.nonlinearities.rectify,
+            W=lasagne.init.Normal())
 
         # Mean
         mu = lasagne.layers.DenseLayer(
             encoder,
             num_units=n_latent,
             nonlinearity=None,
-            W=lasagne.init.Normal()) #(*, n_latent)
+            W=lasagne.init.Normal())  # (*, n_latent)
 
         # Standard deviation
         # predict log sigma instead of sigma so KLD does not become infinity later on
@@ -66,47 +72,61 @@ class VariationalAutoEncoder(object):
             encoder,
             num_units=n_latent,
             nonlinearity=None,
-            W=lasagne.init.Normal()) #(*, n_latent)
+            W=lasagne.init.Normal())  # (*, n_latent)
         return mu, log_sigma
 
-    def build_decoder(self, gaussian_merge_layer, shape=(-1,1,28,28)):
+    def build_decoder(self, gaussian_merge_layer, shape=(-1, 1, 28, 28)):
         num_units = shape[1] * shape[2] * shape[3]
+
         d1 = lasagne.layers.DenseLayer(gaussian_merge_layer,
-                                                num_units=num_units,
-                                                nonlinearity=lasagne.nonlinearities.rectify,
-                                                W=lasagne.init.Normal())
+                                       num_units=400,
+                                       nonlinearity=lasagne.nonlinearities.rectify,
+                                       W=lasagne.init.Normal())
 
-        d2 = lasagne.layers.ReshapeLayer(d1, shape=shape) #(*, 1, 28, 28)
-        #
-        d3 = lasagne.layers.Conv2DLayer(d2,
-                                        num_filters=shape[1],
-                                        filter_size=(5, 5),
-                                        pad='same',
-                                        nonlinearity=lasagne.nonlinearities.sigmoid,
-                                        W=lasagne.init.Normal()) #(*, 1, 28, 28)
+        d2 = lasagne.layers.DenseLayer(d1,
+                                       num_units=1000,
+                                       nonlinearity=lasagne.nonlinearities.rectify,
+                                       W=lasagne.init.Normal())
 
-        return d3
+        d3 = lasagne.layers.DenseLayer(d2,
+                                       num_units=num_units,
+                                       nonlinearity=None,
+                                       W=lasagne.init.Normal())
 
-    def build_decoder_from_weights(self, weights, input_shape, output_shape=(-1,1,28,28), input_var=None):
+        d4 = lasagne.layers.ReshapeLayer(d3, shape=shape)
+
+        d5 = lasagne.layers.NonlinearityLayer(d4, nonlinearity=lasagne.nonlinearities.sigmoid)
+
+        return d5
+
+    def build_decoder_from_weights(self, weights, input_shape, output_shape=(-1, 1, 28, 28), input_var=None):
         input_layer = lasagne.layers.InputLayer(input_shape, input_var=input_var)  # (*, n_latent)
 
         num_units = output_shape[1] * output_shape[2] * output_shape[3]
+
         d1 = lasagne.layers.DenseLayer(input_layer,
-                                      num_units=num_units,
-                                      nonlinearity=lasagne.nonlinearities.rectify,
-                                      W=weights[0],
-                                      b=weights[1])
+                                       num_units=400,
+                                       nonlinearity=lasagne.nonlinearities.rectify,
+                                       W=weights[0],
+                                       b=weights[1])
 
-        d2 = lasagne.layers.ReshapeLayer(d1, shape=output_shape)  # (*, 1, 28, 28)
+        d2 = lasagne.layers.DenseLayer(d1,
+                                       num_units=1000,
+                                       nonlinearity=lasagne.nonlinearities.rectify,
+                                       W=weights[2],
+                                       b=weights[3])
 
-        d3 = lasagne.layers.Conv2DLayer(d2,
-                                        num_filters=output_shape[1],
-                                        filter_size=(5, 5),
-                                        pad='same',
-                                        nonlinearity=lasagne.nonlinearities.sigmoid,
-                                        W=weights[2],
-                                        b=weights[3])  # (*, 1, 28, 28)
-        return d3
+        d3 = lasagne.layers.DenseLayer(d2,
+                                       num_units=num_units,
+                                       nonlinearity=None,
+                                       W=weights[4],
+                                       b=weights[5])
+
+        d4 = lasagne.layers.ReshapeLayer(d3, shape=output_shape)
+
+        d5 = lasagne.layers.NonlinearityLayer(d4, nonlinearity=lasagne.nonlinearities.sigmoid)
+
+        return d5
 
     '''
     Method that return the Kullcback-leible divergence
@@ -324,7 +344,7 @@ class VariationalAutoEncoder(object):
 
         # Test decoder to construct images from scratch
         self.test_input_var = T.matrix()
-        self.test_decoder = self.build_decoder_from_weights(weights=lasagne.layers.get_all_params(self.vae)[-4:],
+        self.test_decoder = self.build_decoder_from_weights(weights=lasagne.layers.get_all_params(self.vae)[-6:],
                                                        input_shape=(None, self.n_latent),
                                                        output_shape=self.shape,
                                                        input_var=self.test_input_var)
