@@ -115,17 +115,21 @@ class VaeConvNet(VariationalAutoEncoder):
         self.vae = self.build_decoder(self.gml, shape=shape)
 
         # train
-        self.train_vae(input_var=self.input_var,
-                       vae=self.vae,
-                       encoder=self.encoder,
-                       X_train=self.X_train,
-                       Y_train=self.X_train,
-                       X_val=self.X_val,
-                       Y_val=self.X_val,
-                       num_epochs=num_epochs,
-                       optimizer_name=optimizer_name,
-                       learning_rate=learning_rate,
-                       batch_size=batch_size)
+        self.lst_loss_train, self.lst_loss_val = self.train_vae(input_var=self.input_var,
+                                                                vae=self.vae,
+                                                                   encoder=self.encoder,
+                                                                   X_train=self.X_train,
+                                                                   Y_train=self.X_train,
+                                                                   X_val=self.X_val,
+                                                                   Y_val=self.X_val,
+                                                                   num_epochs=num_epochs,
+                                                                   optimizer_name=optimizer_name,
+                                                                   learning_rate=learning_rate,
+                                                                   batch_size=batch_size)
+
+        # Save training and validation loss for later plotting
+        self.visualization.save_loss(self.lst_loss_train, "training")
+        self.visualization.save_loss(self.lst_loss_val, "validation")
 
         # Construct images from scratch
         self.test_input_var = T.matrix()
