@@ -78,8 +78,8 @@ class Visualization(object):
     def visualize_latent_space(self, output_function, shape, stamp):
         # Passing the output function from the variational autoencoder here is not very nice, but yeah... it works
         nx = ny = 20
-        x_values = np.linspace(-3, 3, nx)
-        y_values = np.linspace(-3, 3, ny)
+        x_values = np.float32(np.linspace(-3, 3, nx))
+        y_values = np.float32(np.linspace(-3, 3, ny))
 
         shape_x = shape[2]
         shape_c = shape[1]
