@@ -103,16 +103,16 @@ class VaeConvNet(VariationalAutoEncoder):
         # encoder
         self.input_var = T.tensor4()
         self.n_latent = n_latent
-        shape = (None, input_shape[1], input_shape[2], input_shape[3])
-        self.encoder = self.build_encoder(input_var=self.input_var, n_latent=self.n_latent, shape=shape)
+        self._shape = (None, input_shape[1], input_shape[2], input_shape[3])
+        self.encoder = self.build_encoder(input_var=self.input_var, n_latent=self.n_latent, shape=self._shape)
 
         # Gaussian layer in between encoder and decoder
         self.mu, self.log_sigma = self.encoder
         self.gml = GaussianLayer(self.mu, self.log_sigma)
 
         # decoder
-        shape = (-1, input_shape[1], input_shape[2], input_shape[3])
-        self.vae = self.build_decoder(self.gml, shape=shape)
+        self.shape = (-1, input_shape[1], input_shape[2], input_shape[3])
+        self.vae = self.build_decoder(self.gml, shape=self.shape)
 
         # train
         self.lst_loss_train, self.lst_loss_val = self.train_vae(input_var=self.input_var,
@@ -135,5 +135,5 @@ class VaeConvNet(VariationalAutoEncoder):
         self.test_input_var = T.matrix()
         self.test_decoder = self.build_decoder_from_weights(weights=lasagne.layers.get_all_params(self.vae)[-6:],
                                                        input_shape=(None, self.n_latent),
-                                                       output_shape=shape,
+                                                       output_shape=self.shape,
                                                        input_var=self.test_input_var)

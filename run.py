@@ -7,7 +7,7 @@ from vae_ffnn import VaeFfnn
 from vae_convnet2 import VaeConvNet2
 from vae_input_output import VaeInputOutput
 
-scenario = 1
+scenario = 1.4
 
 if __name__ == "__main__":
 
