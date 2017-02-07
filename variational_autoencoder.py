@@ -137,7 +137,14 @@ class VariationalAutoEncoder(object):
                 excerpt = slice(start_idx, start_idx + batchsize)
             yield inputs[excerpt], targets[excerpt]
 
-    def train_vae(self, input_var, vae, encoder, X_train, Y_train, X_val, Y_val, num_epochs=20, learning_rate=0.001, batch_size=64):
+    def get_updates(self, loss, all_params, learning_rate, optimizer_name="adam"):
+        if optimizer_name == "rmsprop":
+            return lasagne.updates.rmsprop(loss, all_params, learning_rate=learning_rate)
+        else:
+            return lasagne.updates.adam(loss, all_params, learning_rate=learning_rate)
+
+
+    def train_vae(self, input_var, vae, encoder, X_train, Y_train, X_val, Y_val, num_epochs=20, optimizer_name="adam", learning_rate=0.001, batch_size=64):
         # Create Theano variable for output tensor
         true_output = T.tensor4('targets')
 
@@ -159,7 +166,7 @@ class VariationalAutoEncoder(object):
 
         # update the vae according to loss
         all_params = lasagne.layers.get_all_params(vae)
-        updates = lasagne.updates.adam(loss, all_params, learning_rate=learning_rate)
+        updates = self.get_updates(loss, all_params, optimizer_name=optimizer_name, learning_rate=learning_rate)
 
         # train function
         train = theano.function([input_var, true_output], loss, updates=updates)
@@ -276,7 +283,7 @@ class VariationalAutoEncoder(object):
 
     #### MAIN FUNCTION ####
 
-    def main(self, data_set, n_latent, num_epochs=20, learning_rate=0.001, batch_size=64, downsampling=None):
+    def main(self, data_set, n_latent, num_epochs=20, optimizer_name="adam", learning_rate=0.001, batch_size=64, downsampling=None):
         # Load data
         self.X_train, self.X_val, self.X_test, self.y_test = self.load_data(data_set=data_set, downsampling=downsampling)
         print(self.X_train.shape, self.X_val.shape, self.X_test.shape, self.y_test.shape)
@@ -307,6 +314,7 @@ class VariationalAutoEncoder(object):
                                                                 X_val=self.X_val,
                                                                 Y_val=self.X_val,
                                                                 num_epochs=num_epochs,
+                                                                optimizer_name=optimizer_name,
                                                                 learning_rate=learning_rate,
                                                                 batch_size=batch_size)
 

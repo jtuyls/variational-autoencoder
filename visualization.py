@@ -36,7 +36,7 @@ class Visualization(object):
             plt.title("Reconstructed image")
             # plt.show()
         plt.tight_layout()
-        plt.savefig(self.output_dir + '/fig_comparison_' + stamp + '.png')
+        plt.savefig(self.output_dir + '/fig_comparison_' + stamp + '.png', bbox_inches='tight')
         #plt.show()
         plt.close()
         #plt.savefig('figures/fig_' + str(i) + '.png')
@@ -71,7 +71,7 @@ class Visualization(object):
         plt.figure(figsize=(8, 10))
         plt.imshow(canvas, origin="upper", cmap='gray')
         plt.tight_layout()
-        plt.savefig(self.output_dir + '/fig_canvas_' + stamp + '.png')
+        plt.savefig(self.output_dir + '/fig_canvas_' + stamp + '.png', bbox_inches='tight')
         #plt.show()
         plt.close()
 
@@ -114,7 +114,7 @@ class Visualization(object):
             else:
                 image = self.deprocess_image(inputs[i])
             plt.imshow(image, cmap='gray')
-            plt.savefig(self.output_dir + '/fig_' + stamp + "_" + str(i) + '.png')
+            plt.savefig(self.output_dir + '/fig_' + stamp + "_" + str(i) + '.png', bbox_inches='tight')
             #plt.show()
             plt.close()
 
@@ -123,7 +123,7 @@ class Visualization(object):
         plt.scatter(mu[:, 0], mu[:, 1], c=y_values, cmap='jet')
         plt.colorbar()
         plt.grid()
-        plt.savefig(self.output_dir + '/fig_latent_' + stamp + '.png')
+        plt.savefig(self.output_dir + '/fig_latent_' + stamp + '.png', bbox_inches='tight')
         #plt.show()
         plt.close()
 
@@ -131,7 +131,7 @@ class Visualization(object):
         plt.figure(figsize=(8, 10))
         #Xi, Yi = np.meshgrid(x_values, y_values)
         plt.imshow(canvas, origin="upper", cmap="gray")
-        plt.savefig(self.output_dir + '/fig_canvas_latent_' + stamp + '.png')
+        plt.savefig(self.output_dir + '/fig_canvas_latent_' + stamp + '.png', bbox_inches='tight')
         plt.close()
 
     def save_loss(self, lst, stamp):

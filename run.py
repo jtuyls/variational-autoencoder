@@ -3,11 +3,23 @@ import os
 from visualization import Visualization
 from variational_autoencoder import VariationalAutoEncoder
 from vae_convnet import VaeConvNet
+from vae_ffnn import VaeFfnn
 from vae_input_output import VaeInputOutput
 
-scenario = 1
+scenario = 0
 
 if __name__ == "__main__":
+
+    if scenario == 0:
+        output_dir = os.path.dirname(os.path.abspath(__file__)) + '/figures_scenario_0'
+        viz = Visualization(output_dir=output_dir)
+        vae = VariationalAutoEncoder(visualization=viz)
+        vae.main(data_set="mnist", n_latent=20, num_epochs=100, optimizer_name="rmsprop", learning_rate=0.0001, batch_size=100,
+                 downsampling=None)
+        vae.test_vae(downsampling=10)
+        vae.visualize_train_images_original(100)
+        vae.construct_images_from_scratch(100)
+        vae.visualize_latent_space()
 
     ###############
     #### MNIST ####
