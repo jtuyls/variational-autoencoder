@@ -3,12 +3,13 @@
 import theano.tensor as T
 import lasagne
 
+from variational_autoencoder import VariationalAutoEncoder
 from vae_convnet import VaeConvNet
 from latent_layer import GaussianLayer
 
 from data import cell_data_input_output
 
-class VaeInputOutput(VaeConvNet):
+class VaeInputOutput(VariationalAutoEncoder):
 
     def __init__(self, visualization=None):
         super(VaeInputOutput, self).__init__(visualization)
@@ -26,7 +27,7 @@ class VaeInputOutput(VaeConvNet):
         return  X_train, Y_train, X_val, Y_val, X_test, Y_test
 
 
-    def main(self, data_set, n_latent, num_epochs=20, learning_rate=0.001, batch_size=64, downsampling=None):
+    def main(self, data_set, n_latent, num_epochs=20, optimizer_name="adam", learning_rate=0.001, batch_size=64, downsampling=None):
         # Load data
         self.X_train, self.Y_train, self.X_val, self.Y_val, self.X_test, self.Y_test = self.load_data(data_set=data_set,
                                                                                                     downsampling=downsampling)
@@ -59,6 +60,7 @@ class VaeInputOutput(VaeConvNet):
                        X_val=self.X_val,
                        Y_val=self.Y_val,
                        num_epochs=num_epochs,
+                       optimizer_name=optimizer_name,
                        learning_rate=learning_rate,
                        batch_size=batch_size)
 

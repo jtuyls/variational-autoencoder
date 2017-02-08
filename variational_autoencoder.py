@@ -239,7 +239,7 @@ class VariationalAutoEncoder(object):
 
             lst_loss_val.append(val_err / val_batches)
 
-            if epoch + 1 % 10 == 0:
+            if (epoch + 1) % 10 == 0:
                 output = get_output(X_train[:100])
                 self.visualization.visualize_image_canvas(output, stamp="train_" + str(epoch + 1))
 
