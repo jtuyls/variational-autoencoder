@@ -10,6 +10,8 @@ import numpy as np
 from visualization import Visualization
 from data import mnist, celeb_data, cell_data
 from latent_layer import GaussianLayer
+import tsne
+import pylab as plt
 
 class VariationalAutoEncoder(object):
 
@@ -252,6 +254,71 @@ class VariationalAutoEncoder(object):
         return lst_loss_train, lst_loss_val
 
     #### TEST FUNCTIONS ####
+
+    def test_encoder(self, downsampling=None):
+        X_test = self.X_test if downsampling == None else self.X_test[:downsampling]
+        Y_test = self.y_test if downsampling == None else self.y_test[:downsampling]
+
+        # After training test on test images and visualize 10 test images
+        output = lasagne.layers.get_output(self.gml)
+        get_output = theano.function([self.input_var], output)
+        gml_out = get_output(X_test)
+        # print gml_out
+
+        # print X_test[:1]
+        # print Y_test[:1]
+
+        np.savetxt('encoder_output.txt', gml_out)
+        np.savetxt('labels.txt', Y_test)
+
+    def run_tsne(self, dataset, max_iter=1000):
+        print
+        "Run Y = tsne.tsne(X, no_dims, perplexity) to perform t-SNE on your dataset."
+        print
+        "Running on encoded features by VAE encoder..."
+        X = np.loadtxt("encoder_output.txt")
+        labels = np.loadtxt("labels.txt")
+
+        # X = X[:1000, :]
+        # labels = labels[:1000]
+
+        Y = tsne.tsne(X, 2, 50, 20.0, max_iter)
+
+        nLabels = -1
+        if dataset == 'mnist':
+            nLabels = 10
+        elif dataset == 'celeb_data':
+            nLabels = 2
+
+        if nLabels == -1:
+            return
+
+        fig = []
+        for pidx in range(0, nLabels):
+            idx = np.where(labels == pidx)
+            print
+            pidx, len(idx)
+            fig.append(plt.scatter(Y[idx, 0], Y[idx, 1], 20))
+
+        if dataset == 'mnist':
+            plt.legend((fig[0], fig[1], fig[2], fig[3], fig[4], fig[5], fig[6], fig[7], fig[8], fig[9]),
+                       ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'),
+                       scatterpoints=1,
+                       loc='lower left',
+                       ncol=3,
+                       fontsize=8)
+            save_image_name = 'tsne_encoded_MNIST1.jpg'
+        elif dataset == 'celeb_data':
+            plt.legend((fig[0], fig[1]),
+                       ('0', '1'),
+                       scatterpoints=1,
+                       loc='lower left',
+                       ncol=2,
+                       fontsize=8)
+            save_image_name = 'tsne_encoded_Celeb1.jpg'
+
+        plt.savefig(save_image_name)
+        plt.close()
 
     def test_vae(self, downsampling=None):
         X_test = self.X_test if downsampling == None else self.X_test[:downsampling]
